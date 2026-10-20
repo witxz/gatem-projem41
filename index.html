@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pati Dünyası | Evcil Hayvan Mağazası</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#faf8ff;color:#29233d}
+header{background:white;padding:20px 6%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;box-shadow:0 3px 15px #0000000a}
+.logo{font-size:26px;font-weight:bold;color:#7954d9}
+nav{display:flex;gap:18px;flex-wrap:wrap}
+nav a{color:#29233d;text-decoration:none;font-weight:bold}
+button{cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:bold}
+.sepet{background:#7954d9;color:white}
+.karsilama{margin:30px auto;width:88%;padding:45px;background:#eee7ff;border-radius:25px}
+.karsilama h1{font-size:clamp(30px,5vw,48px);margin:0 0 15px}
+.karsilama p{font-size:17px;line-height:1.7}
+.buton{background:#7954d9;color:white;margin-top:10px}
+.bolum{width:88%;margin:40px auto}
+.arama{width:100%;padding:15px;border:1px solid #ddd2f8;border-radius:12px;font-size:16px}
+.kategoriler{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.kategoriler button{background:white;border:1px solid #ded5f2}
+.kategoriler button.secili{background:#7954d9;color:white}
+.urunler{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.urun{background:white;padding:14px;border-radius:16px;box-shadow:0 4px 18px #00000008}
+.urun img{width:100%;height:160px;object-fit:cover;border-radius:12px}
+.urun h3{font-size:17px}
+.aciklama{color:#777;font-size:14px}
+.fiyat{font-weight:bold;font-size:20px;color:#7954d9}
+.ekle{width:100%;background:#29233d;color:white}
+.alt{background:#29233d;color:white;text-align:center;padding:30px}
+#sepetPenceresi{display:none;position:fixed;inset:0;background:#0008;justify-content:flex-end;z-index:5}
+.sepetIcerik{background:white;width:min(420px,100%);height:100%;padding:24px;overflow:auto}
+.sepetSatir{padding:14px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:10px}
+.kapat{float:right;background:#eee}
+@media(max-width:850px){.urunler{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.karsilama{padding:28px 22px;width:92%}.bolum{width:92%}.urun img{height:120px}.urun{padding:9px}header{padding:16px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🐾 Pati Dünyası</div>
+  <nav>
+    <a href="#anasayfa">Ana Sayfa</a>
+    <a href="#urunler">Ürünler</a>
+    <a href="#hakkimizda">Hakkımızda</a>
+  </nav>
+  <button class="sepet" onclick="sepetiAc()">🛒 Sepetim (<span id="adet">0</span>)</button>
+</header>
+
+<div class="karsilama" id="anasayfa">
+  <h1>Minik dostlara<br>kocaman sevgiler 💜</h1>
+  <p>Kedi ve köpek dostlarımız için mama, oyuncak ve bakım ürünlerini keşfet!</p>
+  <a href="#urunler"><button class="buton">Ürünleri keşfet →</button></a>
+</div>
+
+<section class="bolum" id="urunler">
+  <h2>🐾 Ürünlerimiz</h2>
+  <input class="arama" id="arama" placeholder="Ürün ara..." oninput="urunleriGoster()">
+  <div class="kategoriler">
+    <button class="secili" onclick="kategoriSec('Tümü',this)">Tümü</button>
+    <button onclick="kategoriSec('Kedi',this)">🐱 Kedi</button>
+    <button onclick="kategoriSec('Köpek',this)">🐶 Köpek</button>
+    <button onclick="kategoriSec('Oyuncak',this)">🎾 Oyuncak</button>
+    <button onclick="kategoriSec('Bakım',this)">🧴 Bakım</button>
+  </div>
+  <div class="urunler" id="urunListesi"></div>
+</section>
+
+<section class="bolum" id="hakkimizda">
+  <h2>💜 Hakkımızda</h2>
+  <p>Pati Dünyası, evcil hayvan ürünlerini tanıtmak için hazırlanmış eğitim amaçlı örnek bir mağazadır.</p>
+</section>
+
+<footer class="alt">
+  <h2>🐾 Pati Dünyası</h2>
+  <p>Minik patiler, büyük mutluluklar!</p>
+  <small>© 2026 Pati Dünyası · Eğitim amaçlı örnek site</small>
+</footer>
+
+<div id="sepetPenceresi" onclick="if(event.target===this)sepetiKapat()">
+  <div class="sepetIcerik">
+    <button class="kapat" onclick="sepetiKapat()">Kapat ✕</button>
+    <h2>🛒 Alışveriş Sepetim</h2>
+    <div id="sepetUrunleri"></div>
+    <h3>Toplam: <span id="toplam">0</span> TL</h3>
+    <button class="buton" onclick="siparisOzeti()">Sipariş özetini göster</button>
+    <p id="bildirim"></p>
+    <small>Bu site eğitim amaçlıdır. Gerçek sipariş veya ödeme yapılmaz.</small>
+  </div>
+</div>
+
+<script>
+const urunler=[
+{id:1,ad:"Kedi Maması",kategori:"Kedi",fiyat:349,resim:"https://images.unsplash.com/photo-1589924691995-400dc9ecc119?auto=format&fit=crop&w=500&q=80",aciklama:"Kediler için günlük mama"},
+{id:2,ad:"Köpek Maması",kategori:"Köpek",fiyat:429,resim:"https://images.unsplash.com/photo-1582798358481-d199fb7347bb?auto=format&fit=crop&w=500&q=80",aciklama:"Köpekler için besleyici mama"},
+{id:3,ad:"Kedi Oyuncağı",kategori:"Oyuncak",fiyat:89,resim:"https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?auto=format&fit=crop&w=500&q=80",aciklama:"Eğlenceli oyun saatleri"},
+{id:4,ad:"Köpek Oyuncağı",kategori:"Oyuncak",fiyat:129,resim:"https://images.unsplash.com/photo-1535294435445-d7249524ef2e?auto=format&fit=crop&w=500&q=80",aciklama:"Oyun ve eğlence için"},
+{id:5,ad:"Kedi Yatağı",kategori:"Kedi",fiyat:599,resim:"https://images.unsplash.com/photo-1511044568932-338cba0ad803?auto=format&fit=crop&w=500&q=80",aciklama:"Rahat bir dinlenme alanı"},
+{id:6,ad:"Tüy Tarama Fırçası",kategori:"Bakım",fiyat:159,resim:"https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=500&q=80",aciklama:"Tüy bakımına yardımcı fırça"},
+{id:7,ad:"Kedi Mama Kabı",kategori:"Kedi",fiyat:119,resim:"https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=500&q=80",aciklama:"Mama ve su için kap"},
+{id:8,ad:"Köpek Tasması",kategori:"Köpek",fiyat:199,resim:"https://images.unsplash.com/photo-1551717743-49959800b1f6?auto=format&fit=crop&w=500&q=80",aciklama:"Yürüyüşler için tasma"}
+];
+let seciliKategori="Tümü";
+let sepet={};
+
+function urunleriGoster(){
+ const aranan=document.getElementById("arama").value.toLocaleLowerCase("tr");
+ const liste=urunler.filter(u=>
+ (seciliKategori==="Tümü"||u.kategori===seciliKategori)&&
+ (u.ad.toLocaleLowerCase("tr").includes(aranan)||u.aciklama.toLocaleLowerCase("tr").includes(aranan))
+ );
+ document.getElementById("urunListesi").innerHTML=liste.map(u=>`
+ <article class="urun">
+ <img src="${u.resim}" alt="${u.ad}" loading="lazy">
+ <h3>${u.ad}</h3>
+ <p class="aciklama">${u.aciklama}</p>
+ <p class="fiyat">${u.fiyat} TL</p>
+ <button class="ekle" onclick="sepeteEkle(${u.id})">Sepete ekle +</button>
+ </article>`).join("")||"<p>Aradığın ürün bulunamadı.</p>";
+}
+
+function kategoriSec(k,dugme){
+ seciliKategori=k;
+ document.querySelectorAll(".kategoriler button").forEach(b=>b.classList.remove("secili"));
+ dugme.classList.add("secili");
+ urunleriGoster();
+}
+
+function sepeteEkle(id){
+ sepet[id]=(sepet[id]||0)+1;
+ sepetiGuncelle();
+}
+
+function sepetiGuncelle(){
+ document.getElementById("adet").textContent=Object.values(sepet).reduce((a,b)=>a+b,0);
+ document.getElementById("sepetUrunleri").innerHTML=Object.entries(sepet).map(([id,miktar])=>{
+ const u=urunler.find(x=>x.id===Number(id));
+ return `<div class="sepetSatir"><div><b>${u.ad}</b><br>${u.fiyat} TL × ${miktar}</div><div><button onclick="miktarDegistir(${id},-1)">−</button><button onclick="miktarDegistir(${id},1)">+</button></div></div>`;
+ }).join("")||"<p>Sepetin henüz boş.</p>";
+ document.getElementById("toplam").textContent=urunler.reduce((t,u)=>t+u.fiyat*(sepet[u.id]||0),0);
+}
+
+function miktarDegistir(id,degisim){
+ sepet[id]=(sepet[id]||0)+degisim;
+ if(sepet[id]<=0)delete sepet[id];
+ sepetiGuncelle();
+}
+
+function sepetiAc(){
+ document.getElementById("sepetPenceresi").style.display="flex";
+}
+function sepetiKapat(){
+ document.getElementById("sepetPenceresi").style.display="none";
+}
+function siparisOzeti(){
+ const sonuc=Object.entries(sepet).map(([id,m])=>{
+ const u=urunler.find(x=>x.id===Number(id));
+ return u.ad+" × "+m;
+ });
+ document.getElementById("bildirim").textContent=sonuc.length? "Örnek siparişin: "+sonuc.join(", ")+". Gerçek sipariş oluşturulmadı.":"Önce sepete ürün eklemelisin.";
+}
+urunleriGoster();
+sepetiGuncelle();
+</script>
+</body>
+</html>
